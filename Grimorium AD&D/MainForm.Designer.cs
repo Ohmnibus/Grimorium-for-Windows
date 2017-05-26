@@ -39,6 +39,8 @@ namespace Grimorium.ADnD
 		private System.Windows.Forms.RadioButton rbSpellTypeBoth;
 		private System.Windows.Forms.RadioButton rbSpellTypePriest;
 		private System.Windows.Forms.RadioButton rbSpellTypeWizard;
+		private System.Windows.Forms.CheckedListBox clbSpheres;
+		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel;
 		
 		/// <summary>
 		/// Disposes resources used by the form.
@@ -65,15 +67,17 @@ namespace Grimorium.ADnD
 			this.tbQuery = new System.Windows.Forms.TextBox();
 			this.dgMain = new System.Windows.Forms.DataGridView();
 			this.splitContainer = new System.Windows.Forms.SplitContainer();
-			this.clbSchools = new System.Windows.Forms.CheckedListBox();
-			this.gbCompos = new System.Windows.Forms.GroupBox();
-			this.cbCompoMaterial = new System.Windows.Forms.CheckBox();
-			this.cbCompoSomatic = new System.Windows.Forms.CheckBox();
-			this.cbCompoVerbal = new System.Windows.Forms.CheckBox();
+			this.tableLayoutPanel = new System.Windows.Forms.TableLayoutPanel();
 			this.gbSpellType = new System.Windows.Forms.GroupBox();
 			this.rbSpellTypeBoth = new System.Windows.Forms.RadioButton();
 			this.rbSpellTypePriest = new System.Windows.Forms.RadioButton();
 			this.rbSpellTypeWizard = new System.Windows.Forms.RadioButton();
+			this.clbSpheres = new System.Windows.Forms.CheckedListBox();
+			this.gbCompos = new System.Windows.Forms.GroupBox();
+			this.cbCompoMaterial = new System.Windows.Forms.CheckBox();
+			this.cbCompoSomatic = new System.Windows.Forms.CheckBox();
+			this.cbCompoVerbal = new System.Windows.Forms.CheckBox();
+			this.clbSchools = new System.Windows.Forms.CheckedListBox();
 			this.cmdClear = new System.Windows.Forms.Button();
 			this.lblBook = new System.Windows.Forms.Label();
 			this.lblSaving = new System.Windows.Forms.Label();
@@ -92,8 +96,9 @@ namespace Grimorium.ADnD
 			this.splitContainer.Panel1.SuspendLayout();
 			this.splitContainer.Panel2.SuspendLayout();
 			this.splitContainer.SuspendLayout();
-			this.gbCompos.SuspendLayout();
+			this.tableLayoutPanel.SuspendLayout();
 			this.gbSpellType.SuspendLayout();
+			this.gbCompos.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// tbQuery
@@ -114,13 +119,12 @@ namespace Grimorium.ADnD
 			| System.Windows.Forms.AnchorStyles.Left) 
 			| System.Windows.Forms.AnchorStyles.Right)));
 			this.dgMain.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-			this.dgMain.Location = new System.Drawing.Point(0, 129);
+			this.dgMain.Location = new System.Drawing.Point(0, 132);
 			this.dgMain.Name = "dgMain";
 			this.dgMain.ReadOnly = true;
 			this.dgMain.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-			this.dgMain.Size = new System.Drawing.Size(522, 286);
+			this.dgMain.Size = new System.Drawing.Size(522, 398);
 			this.dgMain.TabIndex = 2;
-			this.dgMain.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DgMainCellClick);
 			// 
 			// splitContainer
 			// 
@@ -132,9 +136,7 @@ namespace Grimorium.ADnD
 			// 
 			// splitContainer.Panel1
 			// 
-			this.splitContainer.Panel1.Controls.Add(this.clbSchools);
-			this.splitContainer.Panel1.Controls.Add(this.gbCompos);
-			this.splitContainer.Panel1.Controls.Add(this.gbSpellType);
+			this.splitContainer.Panel1.Controls.Add(this.tableLayoutPanel);
 			this.splitContainer.Panel1.Controls.Add(this.cmdClear);
 			this.splitContainer.Panel1.Controls.Add(this.dgMain);
 			this.splitContainer.Panel1.Controls.Add(this.tbQuery);
@@ -153,68 +155,40 @@ namespace Grimorium.ADnD
 			this.splitContainer.Panel2.Controls.Add(this.lblLevel);
 			this.splitContainer.Panel2.Controls.Add(this.lblTitle);
 			this.splitContainer.Panel2.Controls.Add(this.wbBody);
-			this.splitContainer.Size = new System.Drawing.Size(839, 418);
+			this.splitContainer.Size = new System.Drawing.Size(839, 533);
 			this.splitContainer.SplitterDistance = 525;
 			this.splitContainer.TabIndex = 3;
 			// 
-			// clbSchools
+			// tableLayoutPanel
 			// 
-			this.clbSchools.FormattingEnabled = true;
-			this.clbSchools.Location = new System.Drawing.Point(238, 29);
-			this.clbSchools.Name = "clbSchools";
-			this.clbSchools.Size = new System.Drawing.Size(132, 94);
-			this.clbSchools.TabIndex = 6;
-			// 
-			// gbCompos
-			// 
-			this.gbCompos.Controls.Add(this.cbCompoMaterial);
-			this.gbCompos.Controls.Add(this.cbCompoSomatic);
-			this.gbCompos.Controls.Add(this.cbCompoVerbal);
-			this.gbCompos.Location = new System.Drawing.Point(122, 29);
-			this.gbCompos.Name = "gbCompos";
-			this.gbCompos.Size = new System.Drawing.Size(110, 94);
-			this.gbCompos.TabIndex = 5;
-			this.gbCompos.TabStop = false;
-			this.gbCompos.Text = "Components";
-			// 
-			// cbCompoMaterial
-			// 
-			this.cbCompoMaterial.AutoSize = true;
-			this.cbCompoMaterial.Location = new System.Drawing.Point(6, 65);
-			this.cbCompoMaterial.Name = "cbCompoMaterial";
-			this.cbCompoMaterial.Size = new System.Drawing.Size(63, 17);
-			this.cbCompoMaterial.TabIndex = 2;
-			this.cbCompoMaterial.Text = "Material";
-			this.cbCompoMaterial.UseVisualStyleBackColor = true;
-			// 
-			// cbCompoSomatic
-			// 
-			this.cbCompoSomatic.AutoSize = true;
-			this.cbCompoSomatic.Location = new System.Drawing.Point(6, 42);
-			this.cbCompoSomatic.Name = "cbCompoSomatic";
-			this.cbCompoSomatic.Size = new System.Drawing.Size(64, 17);
-			this.cbCompoSomatic.TabIndex = 1;
-			this.cbCompoSomatic.Text = "Somatic";
-			this.cbCompoSomatic.UseVisualStyleBackColor = true;
-			// 
-			// cbCompoVerbal
-			// 
-			this.cbCompoVerbal.AutoSize = true;
-			this.cbCompoVerbal.Location = new System.Drawing.Point(6, 19);
-			this.cbCompoVerbal.Name = "cbCompoVerbal";
-			this.cbCompoVerbal.Size = new System.Drawing.Size(56, 17);
-			this.cbCompoVerbal.TabIndex = 0;
-			this.cbCompoVerbal.Text = "Verbal";
-			this.cbCompoVerbal.UseVisualStyleBackColor = true;
+			this.tableLayoutPanel.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
+			this.tableLayoutPanel.ColumnCount = 4;
+			this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+			this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+			this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+			this.tableLayoutPanel.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 25F));
+			this.tableLayoutPanel.Controls.Add(this.gbSpellType, 0, 0);
+			this.tableLayoutPanel.Controls.Add(this.clbSpheres, 3, 0);
+			this.tableLayoutPanel.Controls.Add(this.gbCompos, 1, 0);
+			this.tableLayoutPanel.Controls.Add(this.clbSchools, 2, 0);
+			this.tableLayoutPanel.Location = new System.Drawing.Point(3, 29);
+			this.tableLayoutPanel.Name = "tableLayoutPanel";
+			this.tableLayoutPanel.RowCount = 1;
+			this.tableLayoutPanel.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+			this.tableLayoutPanel.Size = new System.Drawing.Size(519, 100);
+			this.tableLayoutPanel.TabIndex = 8;
 			// 
 			// gbSpellType
 			// 
+			this.gbSpellType.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.gbSpellType.Controls.Add(this.rbSpellTypeBoth);
 			this.gbSpellType.Controls.Add(this.rbSpellTypePriest);
 			this.gbSpellType.Controls.Add(this.rbSpellTypeWizard);
-			this.gbSpellType.Location = new System.Drawing.Point(3, 29);
+			this.gbSpellType.Location = new System.Drawing.Point(3, 3);
 			this.gbSpellType.Name = "gbSpellType";
-			this.gbSpellType.Size = new System.Drawing.Size(113, 94);
+			this.gbSpellType.Size = new System.Drawing.Size(123, 94);
 			this.gbSpellType.TabIndex = 4;
 			this.gbSpellType.TabStop = false;
 			this.gbSpellType.Text = "Spell Type";
@@ -250,6 +224,74 @@ namespace Grimorium.ADnD
 			this.rbSpellTypeWizard.TabIndex = 0;
 			this.rbSpellTypeWizard.Text = "Wizard";
 			this.rbSpellTypeWizard.UseVisualStyleBackColor = true;
+			// 
+			// clbSpheres
+			// 
+			this.clbSpheres.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
+			this.clbSpheres.CheckOnClick = true;
+			this.clbSpheres.FormattingEnabled = true;
+			this.clbSpheres.Location = new System.Drawing.Point(390, 3);
+			this.clbSpheres.Name = "clbSpheres";
+			this.clbSpheres.Size = new System.Drawing.Size(126, 94);
+			this.clbSpheres.Sorted = true;
+			this.clbSpheres.TabIndex = 7;
+			// 
+			// gbCompos
+			// 
+			this.gbCompos.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
+			this.gbCompos.Controls.Add(this.cbCompoMaterial);
+			this.gbCompos.Controls.Add(this.cbCompoSomatic);
+			this.gbCompos.Controls.Add(this.cbCompoVerbal);
+			this.gbCompos.Location = new System.Drawing.Point(132, 3);
+			this.gbCompos.Name = "gbCompos";
+			this.gbCompos.Size = new System.Drawing.Size(123, 94);
+			this.gbCompos.TabIndex = 5;
+			this.gbCompos.TabStop = false;
+			this.gbCompos.Text = "Components";
+			// 
+			// cbCompoMaterial
+			// 
+			this.cbCompoMaterial.AutoSize = true;
+			this.cbCompoMaterial.Location = new System.Drawing.Point(6, 65);
+			this.cbCompoMaterial.Name = "cbCompoMaterial";
+			this.cbCompoMaterial.Size = new System.Drawing.Size(63, 17);
+			this.cbCompoMaterial.TabIndex = 2;
+			this.cbCompoMaterial.Text = "Material";
+			this.cbCompoMaterial.UseVisualStyleBackColor = true;
+			// 
+			// cbCompoSomatic
+			// 
+			this.cbCompoSomatic.AutoSize = true;
+			this.cbCompoSomatic.Location = new System.Drawing.Point(6, 42);
+			this.cbCompoSomatic.Name = "cbCompoSomatic";
+			this.cbCompoSomatic.Size = new System.Drawing.Size(64, 17);
+			this.cbCompoSomatic.TabIndex = 1;
+			this.cbCompoSomatic.Text = "Somatic";
+			this.cbCompoSomatic.UseVisualStyleBackColor = true;
+			// 
+			// cbCompoVerbal
+			// 
+			this.cbCompoVerbal.AutoSize = true;
+			this.cbCompoVerbal.Location = new System.Drawing.Point(6, 19);
+			this.cbCompoVerbal.Name = "cbCompoVerbal";
+			this.cbCompoVerbal.Size = new System.Drawing.Size(56, 17);
+			this.cbCompoVerbal.TabIndex = 0;
+			this.cbCompoVerbal.Text = "Verbal";
+			this.cbCompoVerbal.UseVisualStyleBackColor = true;
+			// 
+			// clbSchools
+			// 
+			this.clbSchools.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
+			this.clbSchools.CheckOnClick = true;
+			this.clbSchools.FormattingEnabled = true;
+			this.clbSchools.Location = new System.Drawing.Point(261, 3);
+			this.clbSchools.Name = "clbSchools";
+			this.clbSchools.Size = new System.Drawing.Size(123, 94);
+			this.clbSchools.Sorted = true;
+			this.clbSchools.TabIndex = 6;
 			// 
 			// cmdClear
 			// 
@@ -371,14 +413,14 @@ namespace Grimorium.ADnD
 			this.wbBody.Location = new System.Drawing.Point(3, 156);
 			this.wbBody.MinimumSize = new System.Drawing.Size(20, 20);
 			this.wbBody.Name = "wbBody";
-			this.wbBody.Size = new System.Drawing.Size(304, 259);
+			this.wbBody.Size = new System.Drawing.Size(304, 374);
 			this.wbBody.TabIndex = 0;
 			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-			this.ClientSize = new System.Drawing.Size(863, 442);
+			this.ClientSize = new System.Drawing.Size(863, 557);
 			this.Controls.Add(this.splitContainer);
 			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Name = "MainForm";
@@ -390,11 +432,14 @@ namespace Grimorium.ADnD
 			this.splitContainer.Panel2.PerformLayout();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer)).EndInit();
 			this.splitContainer.ResumeLayout(false);
-			this.gbCompos.ResumeLayout(false);
-			this.gbCompos.PerformLayout();
+			this.tableLayoutPanel.ResumeLayout(false);
 			this.gbSpellType.ResumeLayout(false);
 			this.gbSpellType.PerformLayout();
+			this.gbCompos.ResumeLayout(false);
+			this.gbCompos.PerformLayout();
 			this.ResumeLayout(false);
+
+		//}this.ResumeLayout(false);
 
 		}
 	}

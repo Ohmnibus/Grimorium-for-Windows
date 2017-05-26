@@ -35,29 +35,37 @@ namespace Grimorium.ADnD
 		
 		public bool Verbal {
 			get {
-				return isValue(compos, Spell.COMP_VERBAL);
+				return IsValue(compos, Spell.COMP_VERBAL);
 			}
 			set {
-				compos = setValue(compos, Spell.COMP_VERBAL, value);
+				compos = SetValue(compos, Spell.COMP_VERBAL, value);
 			}
 		}
 		
 		public bool Somatic {
 			get {
-				return isValue(compos, Spell.COMP_SOMATIC);
+				return IsValue(compos, Spell.COMP_SOMATIC);
 			}
 			set {
-				compos = setValue(compos, Spell.COMP_SOMATIC, value);
+				compos = SetValue(compos, Spell.COMP_SOMATIC, value);
 			}
 		}
 		
 		public bool Material {
 			get {
-				return isValue(compos, Spell.COMP_MATERIAL);
+				return IsValue(compos, Spell.COMP_MATERIAL);
 			}
 			set {
-				compos = setValue(compos, Spell.COMP_MATERIAL, value);
+				compos = SetValue(compos, Spell.COMP_MATERIAL, value);
 			}
+		}
+		
+		public bool IsSchool(uint SchoolId) {
+			return IsValue(schools, SchoolId);
+		}
+
+		public bool IsSphere(uint SphereId) {
+			return IsValue(spheres, SphereId);
 		}
 		
 //		public property string Query {
@@ -89,11 +97,39 @@ namespace Grimorium.ADnD
 				&& compos == Spell.COMP_ALL;
 		}
 		
-		public static bool isValue(uint bitField, uint bitToTest) {
+		public string Serialize() {
+			//string retVal = "";
+			return types.ToString("X") + 
+				"|" + levels.ToString("X") +
+				"|" + books.ToString("X") +
+				"|" + schools.ToString("X") +
+				"|" + spheres.ToString("X") +
+				"|" + compos.ToString("X");
+		}
+		
+		public static SpellFilter Deserialize(string serialized) {
+			SpellFilter retVal;
+			try {
+				string[] fields = serialized.Split('|');
+				retVal = new SpellFilter();
+				retVal.types = uint.Parse(fields[0], System.Globalization.NumberStyles.HexNumber);
+				retVal.levels = uint.Parse(fields[1], System.Globalization.NumberStyles.HexNumber);
+				retVal.books = uint.Parse(fields[2], System.Globalization.NumberStyles.HexNumber);
+				retVal.schools = uint.Parse(fields[3], System.Globalization.NumberStyles.HexNumber);
+				retVal.spheres = uint.Parse(fields[4], System.Globalization.NumberStyles.HexNumber);
+				retVal.compos = uint.Parse(fields[5], System.Globalization.NumberStyles.HexNumber);
+			} catch (Exception ex) {
+				Console.WriteLine(ex);
+				retVal = new SpellFilter();
+			}
+			return retVal;
+		}
+		
+		public static bool IsValue(uint bitField, uint bitToTest) {
 			return (bitField & bitToTest) != 0;
 		}
 			
-		public static uint setValue(uint bitField, uint bitToTest, bool value) {
+		public static uint SetValue(uint bitField, uint bitToTest, bool value) {
 			if (value) {
 				bitField |= bitToTest;
 			} else {

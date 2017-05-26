@@ -9,8 +9,9 @@
 using System;
 using System.Data;
 using System.Windows.Forms;
-using System.Drawing;
 using System.Linq;
+using System.IO;
+using System.Text;
 
 using System.Data.SQLite;
 
@@ -28,7 +29,7 @@ namespace Grimorium.ADnD
 		private const string connString = @"data source=.\Resources\Grimorium.db;read only=True";
 		
 		SpellDecoder mDecoder = new SpellDecoder();
-		SpellFilter mFilter = new SpellFilter();
+		SpellFilter mFilter; // = new SpellFilter();
 
 		public MainForm() {
 			//
@@ -39,11 +40,80 @@ namespace Grimorium.ADnD
 			//
 			// TODO: Add constructor code after the InitializeComponent() call.
 			//
+			mFilter = readFilter();
 			initFilter(mFilter);
 			loadData();
 			resetSpell();
+			
+			//this.dgMain.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DgMainCellClick);
+			this.dgMain.RowEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.DgMainRowEnter);
 		}
 		
+		protected override void OnClosed(EventArgs e){
+			base.OnClosed(e);
+			writeFilter(mFilter);
+		}
+		
+		private const string FilterFileName = "filter.cfg";
+		
+		private void writeFilter(SpellFilter filter) {
+			try {
+				using (FileStream fs = File.OpenWrite(FilterFileName)) {
+					using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8)) {
+						sw.WriteLine(filter.Serialize());
+					}
+				}
+			} catch (Exception ex) {
+				//Uh oh....
+				Console.WriteLine(ex);
+			}
+		}
+		
+		private SpellFilter readFilter() {
+			SpellFilter retVal;
+			try {
+				using (FileStream fs = File.OpenRead(FilterFileName)) {
+					using (StreamReader sr = new StreamReader(fs, Encoding.UTF8)) {
+						retVal = SpellFilter.Deserialize(
+							sr.ReadLine()
+						);
+					}
+				}
+			} catch (Exception ex) {
+				//Uh oh....
+				Console.WriteLine(ex);
+				retVal = new SpellFilter();
+			}
+			return retVal;
+		}
+			
+		private readonly string[] columns = {
+			SplTbl._ID,
+			SplTbl.COLUMN_NAME_TYPE,
+			SplTbl.COLUMN_NAME_LEVEL,
+			SplTbl.COLUMN_NAME_NAME,
+			SplTbl.COLUMN_NAME_SCHOOLS_BITFIELD,
+			SplTbl.COLUMN_NAME_COMPONENTS_BITFIELD
+		};
+		
+		private const int IDX_COL_ID = 0;
+		private const int IDX_COL_TYPE = 1;
+		private const int IDX_COL_LEVEL = 2;
+		private const int IDX_COL_NAME = 3;
+		private const int IDX_COL_SCHOOLS_BITFIELD = 4;
+		private const int IDX_COL_COMPONENTS_BITFIELD = 5;
+		
+		private string getColumnChain() {
+			string retVal = "";
+			string sep = "";
+			foreach (string column in columns) {
+				retVal += sep + column;
+				sep = ",";
+			}
+			return retVal;
+		}
+		
+
 		private void loadData() {
 			loadData(mFilter);
 		}
@@ -81,32 +151,6 @@ namespace Grimorium.ADnD
 					}
 				}
 			}
-		}
-		
-		private readonly string[] columns = {
-			SplTbl._ID,
-			SplTbl.COLUMN_NAME_TYPE,
-			SplTbl.COLUMN_NAME_LEVEL,
-			SplTbl.COLUMN_NAME_NAME,
-			SplTbl.COLUMN_NAME_SCHOOLS_BITFIELD,
-			SplTbl.COLUMN_NAME_COMPONENTS_BITFIELD
-		};
-		
-		private const int IDX_COL_ID = 0;
-		private const int IDX_COL_TYPE = 1;
-		private const int IDX_COL_LEVEL = 2;
-		private const int IDX_COL_NAME = 3;
-		private const int IDX_COL_SCHOOLS_BITFIELD = 4;
-		private const int IDX_COL_COMPONENTS_BITFIELD = 5;
-		
-		private string getColumnChain() {
-			string retVal = "";
-			string sep = "";
-			foreach (string column in columns) {
-				retVal += sep + column;
-				sep = ",";
-			}
-			return retVal;
 		}
 		
 		private DataTable fillTable(SQLiteDataReader dr) {
@@ -148,7 +192,6 @@ namespace Grimorium.ADnD
 						"Where " + SplTbl._ID + " = " + id + " ";
 					
 					using (SQLiteDataReader dr = cmd.ExecuteReader()) {
-						
 						if (dr.Read()) {
 							setSpell(dr);
 						} else {
@@ -169,7 +212,8 @@ namespace Grimorium.ADnD
 			);
 			lblSchools.Text = mDecoder.GetSchools((decimal)dr[SplTbl.COLUMN_NAME_SCHOOLS_BITFIELD], true);
 			if (spellType == SpellDecoder.TYPE_CLERICS) {
-				lblSpheres.Text = "Spheres: " + mDecoder.GetSpheres((decimal)dr[SplTbl.COLUMN_NAME_SCHOOLS_BITFIELD]);
+				lblSpheres.Text = "Spheres: " + mDecoder.GetSpheres((decimal)dr[SplTbl.COLUMN_NAME_SPHERES_BITFIELD]);
+				//lblSpheres.Text += " (" + (string)dr[SplTbl.COLUMN_NAME_SPHERES] + ")";
 			} else {
 				lblSpheres.Text = "";
 			}
@@ -201,12 +245,9 @@ namespace Grimorium.ADnD
 			lblSaving.Text = "";
 			lblBook.Text = "";
 			wbBody.DocumentText = mDecoder.getDescription("");
-			wbBody.Document.BackColor = Color.Gray;
-			wbBody.Document.ForeColor = Color.Red;
 		}
 		
 		private void initFilter(SpellFilter filter) {
-
 			if (filter.types == SpellDecoder.TYPE_WIZARDS) {
 				rbSpellTypeWizard.Checked = true;
 			} else if (filter.types == SpellDecoder.TYPE_CLERICS) {
@@ -225,13 +266,39 @@ namespace Grimorium.ADnD
 			cbCompoVerbal.CheckedChanged += new System.EventHandler(cbCompoCheckedChanged);
 			cbCompoSomatic.CheckedChanged += new System.EventHandler(cbCompoCheckedChanged);
 			cbCompoMaterial.CheckedChanged += new System.EventHandler(cbCompoCheckedChanged);
+			
+			clbSchools.Items.Clear();
+			string[] schools = mDecoder.GetSchoolArray(SpellDecoder.SCHOOL_ALL & 0x0effffff);
+			foreach (string school in schools) {
+				uint sid = mDecoder.GetSchoolIdByName(school);
+				bool value = filter.IsSchool(sid);
+				clbSchools.Items.Add(school, value);
+			}
+			clbSchools.SelectedIndexChanged += new System.EventHandler(clbCheckedChanged);
+			
+			clbSpheres.Items.Clear();
+			string[] spheres = mDecoder.GetSphereArray(SpellDecoder.SPHERE_ALL & 0x0effffff);
+			foreach (string sphere in spheres) {
+				uint sid = mDecoder.GetSphereIdByName(sphere);
+				bool value = filter.IsSchool(sid);
+				clbSpheres.Items.Add(sphere, true);
+			}
+			clbSpheres.SelectedIndexChanged += new System.EventHandler(clbCheckedChanged);
+			
+			//SpellFilter sf = new SpellFilter();
+			//sf = SpellFilter.Deserialize(sf.Serialize());
 		}
 		
 		void DgMainCellClick(object sender, DataGridViewCellEventArgs e) {
+//			DataGridViewRow row = dgMain.Rows[e.RowIndex];
+//			setSpell((long)row.Cells["_id"].Value);
+		}
+		
+		void DgMainRowEnter(object sender, DataGridViewCellEventArgs e) {
 			DataGridViewRow row = dgMain.Rows[e.RowIndex];
 			setSpell((long)row.Cells["_id"].Value);
 		}
-		
+
 		void TbQueryTextChanged(object sender, EventArgs e) {
 			mFilter.query = tbQuery.Text;
 			loadData();
@@ -259,28 +326,6 @@ namespace Grimorium.ADnD
 		}
 		
 		void cbCompoCheckedChanged(object sender, EventArgs e) {
-//			if (sender == cbCompoVerbal) {
-//				mFilter.compos = SpellFilter.setValue(
-//					mFilter.compos,
-//					SpellDecoder.COMP_VERBAL,
-//					cbCompoVerbal.Checked
-//				);
-//			} else if (sender == cbCompoSomatic) {
-//				mFilter.compos = SpellFilter.setValue(
-//					mFilter.compos,
-//					SpellDecoder.COMP_SOMATIC,
-//					cbCompoSomatic.Checked
-//				);
-//			} else if (sender == cbCompoMaterial) {
-//				mFilter.compos = SpellFilter.setValue(
-//					mFilter.compos,
-//					SpellDecoder.COMP_MATERIAL,
-//					cbCompoMaterial.Checked
-//				);
-//			} else {
-//				//?!?
-//				return;
-//			}
 			if (cbCompoVerbal.Checked
 			    && cbCompoSomatic.Checked
 			    && cbCompoMaterial.Checked) {
@@ -293,6 +338,32 @@ namespace Grimorium.ADnD
 				mFilter.Material = cbCompoMaterial.Checked;
 			}
 			loadData();
+		}
+		
+		void clbCheckedChanged(object sender, EventArgs e) {
+			if (sender == clbSchools) {
+				if (clbSchools.CheckedItems.Count == clbSchools.Items.Count) {
+					mFilter.schools = SpellDecoder.SCHOOL_ALL;
+				} else {
+					mFilter.schools = SpellDecoder.SCHOOL_NONE;
+					foreach(string school in clbSchools.CheckedItems) {
+						uint sid = mDecoder.GetSchoolIdByName(school);
+						mFilter.schools |= sid;
+					}
+				}
+				loadData();
+			} else if (sender == clbSpheres) {
+				if (clbSpheres.CheckedItems.Count == clbSpheres.Items.Count) {
+					mFilter.spheres = SpellDecoder.SPHERE_ALL;
+				} else {
+					mFilter.spheres = SpellDecoder.SPHERE_NONE;
+					foreach(string sphere in clbSpheres.CheckedItems) {
+						uint sid = mDecoder.GetSphereIdByName(sphere);
+						mFilter.spheres |= sid;
+					}
+				}
+				loadData();
+			}
 		}
 
 	}

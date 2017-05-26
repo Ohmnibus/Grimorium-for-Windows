@@ -7,8 +7,10 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 using System;
+using System.Linq;
 using System.Text;
 using System.Drawing;
+using System.Collections.Generic;
 
 namespace Grimorium.ADnD {
 	/// <summary>
@@ -98,7 +100,7 @@ namespace Grimorium.ADnD {
 
 		private const uint IDX_CODE = 0;
 		private const uint IDX_LABEL = 1;
-		private const uint IDX_TEXT = 2;
+		private const uint IDX_TEXT = IDX_LABEL; //2;
 		
 		private const string SEPARATOR = ",";
 
@@ -324,6 +326,16 @@ namespace Grimorium.ADnD {
 			return retVal;
 		}
 		
+		public string[] GetSchoolArray(decimal bitField) {
+			string[] retVal;
+			if (bitField == (int)SCHOOL_ALL) {
+				retVal = new string[] { SCHOOL_LBL_ALL };
+			} else {
+				retVal = GetTextArray((uint)bitField, SCHOOLS);
+			}
+			return retVal;
+		}
+		
 		public string GetSchools(decimal bitField) {
 			return GetSchools(bitField, false);
 		}
@@ -345,6 +357,22 @@ namespace Grimorium.ADnD {
 			return retVal;
 		}
 		
+		public uint GetSchoolIdByName(string name) {
+			var retVal = SCHOOLS.FirstOrDefault(S => (string)S[IDX_TEXT] == name);
+			
+			return retVal == null ? SCHOOL_NONE : (uint)retVal[IDX_CODE];
+		}
+		
+		public string[] GetSphereArray(decimal bitField) {
+			string[] retVal;
+			if (bitField == (int)SPHERE_ALL) {
+				retVal = new string[] { SPHERE_LBL_ALL };
+			} else {
+				retVal = GetTextArray((uint)bitField, SPHERES);
+			}
+			return retVal;
+		}
+		
 		public string GetSpheres(decimal bitField) {
 			return GetSpheres((int)bitField);
 		}
@@ -359,6 +387,12 @@ namespace Grimorium.ADnD {
 			return retVal;
 		}
 		
+		public uint GetSphereIdByName(string name) {
+			var retVal = SPHERES.FirstOrDefault(S => (string)S[IDX_TEXT] == name);
+			
+			return retVal == null ? SPHERE_NONE : (uint)retVal[IDX_CODE];
+		}
+
 		public string GetComponents(decimal bitField) {
 			return GetComponents((int)bitField);
 		}
@@ -373,7 +407,8 @@ namespace Grimorium.ADnD {
 		}
 		
 		public string GetCompos(int bitField) {
-			return GetLabels((uint)bitField, COMPOS);
+			//return GetLabels((uint)bitField, COMPOS);
+			return GetTableValues((uint)bitField, COMPOS, IDX_LABEL);
 			
 		}
 		
@@ -417,17 +452,39 @@ namespace Grimorium.ADnD {
 			return retVal.ToString();
 		}
 		
-		private string GetLabels(uint bitField, object[][] table) {
-			return GetTableValues(bitField, table, IDX_LABEL);
-		}
+//		private string GetLabels(uint bitField, object[][] table) {
+//			return GetTableValues(bitField, table, IDX_LABEL);
+//		}
 		
 		private string GetTexts(uint bitField, object[][] table) {
 			return GetTableValues(bitField, table, IDX_TEXT);
 		}
 		
 		private string GetTableValues(uint bitField, object[][] table, uint target) {
-			string retVal = "";
-			string sep = "";
+//			string retVal = "";
+//			string sep = "";
+//			foreach (object[] touple in table) {
+//				uint code = (uint)touple[IDX_CODE];
+//				if (code == BITFIELD_ALL) {
+//					//Ignore the "ALL" label
+//					continue;
+//				}
+//				if ((bitField & code) != 0) {
+//					//retVal.add((String)couple[IDX_LABEL]);
+//					retVal += sep + (string)touple[target];
+//					sep = SEPARATOR;
+//				}
+//			}
+//			return retVal;
+			return string.Join(SEPARATOR, GetTableValueArray(bitField, table, target));
+		}
+
+		private string[] GetTextArray(uint bitField, object[][] table) {
+			return GetTableValueArray(bitField, table, IDX_TEXT);
+		}
+		
+		private string[] GetTableValueArray(uint bitField, object[][] table, uint target) {
+			List<string> retVal = new List<string>();
 			foreach (object[] touple in table) {
 				uint code = (uint)touple[IDX_CODE];
 				if (code == BITFIELD_ALL) {
@@ -435,12 +492,10 @@ namespace Grimorium.ADnD {
 					continue;
 				}
 				if ((bitField & code) != 0) {
-					//retVal.add((String)couple[IDX_LABEL]);
-					retVal += sep + (string)touple[target];
-					sep = SEPARATOR;
+					retVal.Add((string)touple[target]);
 				}
 			}
-			return retVal;
+			return retVal.ToArray();
 		}
 		
 	}
