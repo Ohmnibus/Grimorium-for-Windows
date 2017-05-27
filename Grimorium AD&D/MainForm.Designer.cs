@@ -41,6 +41,7 @@ namespace Grimorium.ADnD
 		private System.Windows.Forms.RadioButton rbSpellTypeWizard;
 		private System.Windows.Forms.CheckedListBox clbSpheres;
 		private System.Windows.Forms.TableLayoutPanel tableLayoutPanel;
+		private System.Windows.Forms.CheckBox cbUnofficial;
 		
 		/// <summary>
 		/// Disposes resources used by the form.
@@ -91,6 +92,7 @@ namespace Grimorium.ADnD
 			this.lblLevel = new System.Windows.Forms.Label();
 			this.lblTitle = new System.Windows.Forms.Label();
 			this.wbBody = new System.Windows.Forms.WebBrowser();
+			this.cbUnofficial = new System.Windows.Forms.CheckBox();
 			((System.ComponentModel.ISupportInitialize)(this.dgMain)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.splitContainer)).BeginInit();
 			this.splitContainer.Panel1.SuspendLayout();
@@ -107,7 +109,7 @@ namespace Grimorium.ADnD
 			| System.Windows.Forms.AnchorStyles.Right)));
 			this.tbQuery.Location = new System.Drawing.Point(3, 3);
 			this.tbQuery.Name = "tbQuery";
-			this.tbQuery.Size = new System.Drawing.Size(487, 20);
+			this.tbQuery.Size = new System.Drawing.Size(378, 20);
 			this.tbQuery.TabIndex = 0;
 			this.tbQuery.TextChanged += new System.EventHandler(this.TbQueryTextChanged);
 			// 
@@ -124,7 +126,7 @@ namespace Grimorium.ADnD
 			this.dgMain.ReadOnly = true;
 			this.dgMain.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
 			this.dgMain.Size = new System.Drawing.Size(522, 398);
-			this.dgMain.TabIndex = 2;
+			this.dgMain.TabIndex = 7;
 			// 
 			// splitContainer
 			// 
@@ -136,6 +138,7 @@ namespace Grimorium.ADnD
 			// 
 			// splitContainer.Panel1
 			// 
+			this.splitContainer.Panel1.Controls.Add(this.cbUnofficial);
 			this.splitContainer.Panel1.Controls.Add(this.tableLayoutPanel);
 			this.splitContainer.Panel1.Controls.Add(this.cmdClear);
 			this.splitContainer.Panel1.Controls.Add(this.dgMain);
@@ -189,7 +192,7 @@ namespace Grimorium.ADnD
 			this.gbSpellType.Location = new System.Drawing.Point(3, 3);
 			this.gbSpellType.Name = "gbSpellType";
 			this.gbSpellType.Size = new System.Drawing.Size(123, 94);
-			this.gbSpellType.TabIndex = 4;
+			this.gbSpellType.TabIndex = 3;
 			this.gbSpellType.TabStop = false;
 			this.gbSpellType.Text = "Spell Type";
 			// 
@@ -235,7 +238,7 @@ namespace Grimorium.ADnD
 			this.clbSpheres.Name = "clbSpheres";
 			this.clbSpheres.Size = new System.Drawing.Size(126, 94);
 			this.clbSpheres.Sorted = true;
-			this.clbSpheres.TabIndex = 7;
+			this.clbSpheres.TabIndex = 6;
 			// 
 			// gbCompos
 			// 
@@ -247,7 +250,7 @@ namespace Grimorium.ADnD
 			this.gbCompos.Location = new System.Drawing.Point(132, 3);
 			this.gbCompos.Name = "gbCompos";
 			this.gbCompos.Size = new System.Drawing.Size(123, 94);
-			this.gbCompos.TabIndex = 5;
+			this.gbCompos.TabIndex = 4;
 			this.gbCompos.TabStop = false;
 			this.gbCompos.Text = "Components";
 			// 
@@ -291,15 +294,15 @@ namespace Grimorium.ADnD
 			this.clbSchools.Name = "clbSchools";
 			this.clbSchools.Size = new System.Drawing.Size(123, 94);
 			this.clbSchools.Sorted = true;
-			this.clbSchools.TabIndex = 6;
+			this.clbSchools.TabIndex = 5;
 			// 
 			// cmdClear
 			// 
 			this.cmdClear.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.cmdClear.Location = new System.Drawing.Point(496, 3);
+			this.cmdClear.Location = new System.Drawing.Point(387, 3);
 			this.cmdClear.Name = "cmdClear";
 			this.cmdClear.Size = new System.Drawing.Size(26, 20);
-			this.cmdClear.TabIndex = 3;
+			this.cmdClear.TabIndex = 1;
 			this.cmdClear.Text = "X";
 			this.cmdClear.UseVisualStyleBackColor = true;
 			this.cmdClear.Click += new System.EventHandler(this.CmdClearClick);
@@ -416,6 +419,17 @@ namespace Grimorium.ADnD
 			this.wbBody.Size = new System.Drawing.Size(304, 374);
 			this.wbBody.TabIndex = 0;
 			// 
+			// cbUnofficial
+			// 
+			this.cbUnofficial.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.cbUnofficial.AutoSize = true;
+			this.cbUnofficial.Location = new System.Drawing.Point(419, 5);
+			this.cbUnofficial.Name = "cbUnofficial";
+			this.cbUnofficial.Size = new System.Drawing.Size(100, 17);
+			this.cbUnofficial.TabIndex = 2;
+			this.cbUnofficial.Text = "Show Unofficial";
+			this.cbUnofficial.UseVisualStyleBackColor = true;
+			// 
 			// MainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -438,8 +452,6 @@ namespace Grimorium.ADnD
 			this.gbCompos.ResumeLayout(false);
 			this.gbCompos.PerformLayout();
 			this.ResumeLayout(false);
-
-		//}this.ResumeLayout(false);
 
 		}
 	}

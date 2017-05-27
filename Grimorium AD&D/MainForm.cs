@@ -10,10 +10,8 @@ using System;
 using System.Data;
 using System.Windows.Forms;
 using System.Linq;
-using System.IO;
-using System.Text;
 
-using System.Data.SQLite;
+//using System.Data.SQLite;
 
 using net.ohmnibus.grimorium.database;
 using Cnt = net.ohmnibus.grimorium.database.GrimoriumContract;
@@ -26,10 +24,12 @@ namespace Grimorium.ADnD
 	/// </summary>
 	public partial class MainForm : Form {
 		
-		private const string connString = @"data source=.\Resources\Grimorium.db;read only=True";
+		private const string FilterFileName = "filter.cfg";
 		
+		SpellDB mSpellDB = new SpellDB();
 		SpellDecoder mDecoder = new SpellDecoder();
 		SpellFilter mFilter; // = new SpellFilter();
+		//long[] unofficialSources;
 
 		public MainForm() {
 			//
@@ -40,78 +40,93 @@ namespace Grimorium.ADnD
 			//
 			// TODO: Add constructor code after the InitializeComponent() call.
 			//
-			mFilter = readFilter();
+			InitApp();
+		}
+		
+		protected override void OnClosed(EventArgs e){
+			base.OnClosed(e);
+			mFilter.WriteToFile(FilterFileName);
+		}
+		
+		private void InitApp() {
+			
+			SpellFilter.UNOFFICIAL_SOURCES = mSpellDB.GetUnofficialSources();
+			
+			mFilter = SpellFilter.ReadFromFile(FilterFileName);
+			
 			initFilter(mFilter);
+			
 			loadData();
+			
+			dgMain.Columns[SpellDB.COLUMN_INDEX_ID].Visible = false;
+			dgMain.Columns[SpellDB.COLUMN_INDEX_TYPE].Width = 40;
+			dgMain.Columns[SpellDB.COLUMN_INDEX_NAME].Width = 150;
+			dgMain.Columns[SpellDB.COLUMN_INDEX_LEVEL].Width = 40;
+			dgMain.Columns[SpellDB.COLUMN_INDEX_SCHOOLS].Width = 150;
+			dgMain.Columns[SpellDB.COLUMN_INDEX_COMPONENTS].Width = 60;
+
 			resetSpell();
 			
 			//this.dgMain.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DgMainCellClick);
 			this.dgMain.RowEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.DgMainRowEnter);
 		}
 		
-		protected override void OnClosed(EventArgs e){
-			base.OnClosed(e);
-			writeFilter(mFilter);
-		}
+//		private void writeFilter(SpellFilter filter) {
+//			try {
+//				using (FileStream fs = File.OpenWrite(FilterFileName)) {
+//					using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8)) {
+//						sw.WriteLine(filter.Serialize());
+//					}
+//				}
+//			} catch (Exception ex) {
+//				//Uh oh....
+//				Console.WriteLine(ex);
+//			}
+//		}
 		
-		private const string FilterFileName = "filter.cfg";
-		
-		private void writeFilter(SpellFilter filter) {
-			try {
-				using (FileStream fs = File.OpenWrite(FilterFileName)) {
-					using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8)) {
-						sw.WriteLine(filter.Serialize());
-					}
-				}
-			} catch (Exception ex) {
-				//Uh oh....
-				Console.WriteLine(ex);
-			}
-		}
-		
-		private SpellFilter readFilter() {
-			SpellFilter retVal;
-			try {
-				using (FileStream fs = File.OpenRead(FilterFileName)) {
-					using (StreamReader sr = new StreamReader(fs, Encoding.UTF8)) {
-						retVal = SpellFilter.Deserialize(
-							sr.ReadLine()
-						);
-					}
-				}
-			} catch (Exception ex) {
-				//Uh oh....
-				Console.WriteLine(ex);
-				retVal = new SpellFilter();
-			}
-			return retVal;
-		}
+//		private SpellFilter readFilter() {
+//			SpellFilter retVal;
+//			try {
+//				using (FileStream fs = File.OpenRead(FilterFileName)) {
+//					using (StreamReader sr = new StreamReader(fs, Encoding.UTF8)) {
+//						retVal = SpellFilter.Deserialize(
+//							sr.ReadLine()
+//						);
+//					}
+//				}
+//			} catch (Exception ex) {
+//				//Uh oh....
+//				Console.WriteLine(ex);
+//				retVal = new SpellFilter();
+//			}
+//			return retVal;
+//		}
 			
-		private readonly string[] columns = {
-			SplTbl._ID,
-			SplTbl.COLUMN_NAME_TYPE,
-			SplTbl.COLUMN_NAME_LEVEL,
-			SplTbl.COLUMN_NAME_NAME,
-			SplTbl.COLUMN_NAME_SCHOOLS_BITFIELD,
-			SplTbl.COLUMN_NAME_COMPONENTS_BITFIELD
-		};
+//		private readonly string[] columns = {
+//			SplTbl._ID,
+//			SplTbl.COLUMN_NAME_TYPE,
+//			SplTbl.COLUMN_NAME_LEVEL,
+//			SplTbl.COLUMN_NAME_NAME,
+//			SplTbl.COLUMN_NAME_SCHOOLS_BITFIELD,
+//			SplTbl.COLUMN_NAME_COMPONENTS_BITFIELD
+//		};
+//		
+//		private const int IDX_COL_ID = 0;
+//		private const int IDX_COL_TYPE = 1;
+//		private const int IDX_COL_LEVEL = 2;
+//		private const int IDX_COL_NAME = 3;
+//		private const int IDX_COL_SCHOOLS_BITFIELD = 4;
+//		private const int IDX_COL_COMPONENTS_BITFIELD = 5;
 		
-		private const int IDX_COL_ID = 0;
-		private const int IDX_COL_TYPE = 1;
-		private const int IDX_COL_LEVEL = 2;
-		private const int IDX_COL_NAME = 3;
-		private const int IDX_COL_SCHOOLS_BITFIELD = 4;
-		private const int IDX_COL_COMPONENTS_BITFIELD = 5;
-		
-		private string getColumnChain() {
-			string retVal = "";
-			string sep = "";
-			foreach (string column in columns) {
-				retVal += sep + column;
-				sep = ",";
-			}
-			return retVal;
-		}
+//		private string getColumnChain() {
+//			string retVal = "";
+//			string sep = "";
+//			foreach (string column in columns) {
+//				retVal += sep + column;
+//				sep = ",";
+//			}
+//			return retVal;
+//		}
 		
 
 		private void loadData() {
@@ -119,90 +134,138 @@ namespace Grimorium.ADnD
 		}
 		
 		private void loadData(SpellFilter filter) {
-			using (SQLiteConnection conn = new SQLiteConnection(connString)) {
-				using (SQLiteCommand cmd = new SQLiteCommand(conn)) {
-					conn.Open();
-					
-					cmd.CommandText = "Select " + getColumnChain() + " " +
-						"From " + SplTbl.TABLE_NAME + " " +
-						"Where " + SplTbl.COLUMN_NAME_SOURCE + " <> 1 " +
-						//(string.IsNullOrEmpty(filter) ? "" : "And " + SplTbl.COLUMN_NAME_NAME + " Like @filter ") +
-						(filter.isEmpty() ? "" : "And " + SpellFilter.getWhereClause(filter)) +
-						"Order By " + SplTbl.COLUMN_NAME_TYPE +
-						", " + SplTbl.COLUMN_NAME_LEVEL+ 
-						", " + SplTbl.COLUMN_NAME_NAME;
-					
-					if (! string.IsNullOrEmpty(filter.query)) {
-						cmd.Parameters.AddWithValue("@filter", "%" + filter.query + "%");
-					}
-					
-					using (SQLiteDataReader dr = cmd.ExecuteReader()) {
-						//DataTable dt = new DataTable();
-						//dt.Load(dr);
-						DataTable dt = fillTable(dr);
-						
-						dgMain.DataSource = dt;
-						dgMain.Columns[IDX_COL_ID].Visible = false;
-						dgMain.Columns[IDX_COL_TYPE].Width = 40;
-						dgMain.Columns[IDX_COL_NAME].Width = 150;
-						dgMain.Columns[IDX_COL_LEVEL].Width = 40;
-						dgMain.Columns[IDX_COL_SCHOOLS_BITFIELD].Width = 150;
-						dgMain.Columns[IDX_COL_COMPONENTS_BITFIELD].Width = 60;
-					}
-				}
-			}
+			//DataTable dt = fillTable(dr);
+			
+			//dgMain.DataSource = dt;
+			
+			dgMain.DataSource = mSpellDB.GetSpellTable(filter);
 		}
 		
-		private DataTable fillTable(SQLiteDataReader dr) {
-			DataTable retVal = new DataTable();
-			
-			retVal.Columns.Add(new DataColumn(SplTbl._ID, typeof(long)));
-			retVal.Columns.Add(new DataColumn("Type", typeof(string)));
-			retVal.Columns.Add(new DataColumn("Level", typeof(string)));
-			retVal.Columns.Add(new DataColumn("Name", typeof(string)));
-			retVal.Columns.Add(new DataColumn("Schools", typeof(string)));
-			retVal.Columns.Add(new DataColumn("Compo.", typeof(string)));
-			
-			SpellDecoder decoder = new SpellDecoder();
-			
-			retVal.BeginLoadData();
-			while (dr.Read()) {
-				DataRow row = retVal.NewRow();
-				row[SplTbl._ID] = (long)dr[IDX_COL_ID];
-				row["Type"] = decoder.GetSpellType((decimal)dr[IDX_COL_TYPE]);
-				row["Name"] = dr.GetString(IDX_COL_NAME);
-				row["Level"] = decoder.GetSpellLevel((decimal)dr[IDX_COL_LEVEL]);
-				row["Schools"] = decoder.GetSchools((decimal)dr[IDX_COL_SCHOOLS_BITFIELD]);
-				row["Compo."] = decoder.GetCompos((decimal)dr[IDX_COL_COMPONENTS_BITFIELD]);
-				
-				retVal.Rows.Add(row);
-			}
-			retVal.EndLoadData();
-			
-			return retVal;
-		}
+//		private void loadData(SpellFilter filter) {
+//			using (SQLiteConnection conn = new SQLiteConnection(connString)) {
+//				using (SQLiteCommand cmd = new SQLiteCommand(conn)) {
+//					conn.Open();
+//					
+//					cmd.CommandText = "Select " + getColumnChain() + " " +
+//						"From " + SplTbl.TABLE_NAME + " " +
+//						"Where " + SplTbl.COLUMN_NAME_SOURCE + " <> 1 " +
+//						//(string.IsNullOrEmpty(filter) ? "" : "And " + SplTbl.COLUMN_NAME_NAME + " Like @filter ") +
+//						(filter.isEmpty() ? "" : "And " + SpellFilter.getWhereClause(filter)) +
+//						"Order By " + SplTbl.COLUMN_NAME_TYPE +
+//						", " + SplTbl.COLUMN_NAME_LEVEL+ 
+//						", " + SplTbl.COLUMN_NAME_NAME;
+//					
+//					if (! string.IsNullOrEmpty(filter.query)) {
+//						cmd.Parameters.AddWithValue("@filter", "%" + filter.query + "%");
+//					}
+//					
+//					using (SQLiteDataReader dr = cmd.ExecuteReader()) {
+//						//DataTable dt = new DataTable();
+//						//dt.Load(dr);
+//						DataTable dt = fillTable(dr);
+//						
+//						dgMain.DataSource = dt;
+//						dgMain.Columns[IDX_COL_ID].Visible = false;
+//						dgMain.Columns[IDX_COL_TYPE].Width = 40;
+//						dgMain.Columns[IDX_COL_NAME].Width = 150;
+//						dgMain.Columns[IDX_COL_LEVEL].Width = 40;
+//						dgMain.Columns[IDX_COL_SCHOOLS_BITFIELD].Width = 150;
+//						dgMain.Columns[IDX_COL_COMPONENTS_BITFIELD].Width = 60;
+//					}
+//				}
+//			}
+//		}
+		
+//		private DataTable fillTable(SQLiteDataReader dr) {
+//			DataTable retVal = new DataTable();
+//			
+//			retVal.Columns.Add(new DataColumn(SplTbl._ID, typeof(long)));
+//			retVal.Columns.Add(new DataColumn("Type", typeof(string)));
+//			retVal.Columns.Add(new DataColumn("Level", typeof(string)));
+//			retVal.Columns.Add(new DataColumn("Name", typeof(string)));
+//			retVal.Columns.Add(new DataColumn("Schools", typeof(string)));
+//			retVal.Columns.Add(new DataColumn("Compo.", typeof(string)));
+//			
+//			SpellDecoder decoder = new SpellDecoder();
+//			
+//			retVal.BeginLoadData();
+//			while (dr.Read()) {
+//				DataRow row = retVal.NewRow();
+//				row[SplTbl._ID] = (long)dr[IDX_COL_ID];
+//				row["Type"] = decoder.GetSpellType((decimal)dr[IDX_COL_TYPE]);
+//				row["Name"] = dr.GetString(IDX_COL_NAME);
+//				row["Level"] = decoder.GetSpellLevel((decimal)dr[IDX_COL_LEVEL]);
+//				row["Schools"] = decoder.GetSchools((decimal)dr[IDX_COL_SCHOOLS_BITFIELD]);
+//				row["Compo."] = decoder.GetCompos((decimal)dr[IDX_COL_COMPONENTS_BITFIELD]);
+//				
+//				retVal.Rows.Add(row);
+//			}
+//			retVal.EndLoadData();
+//			
+//			return retVal;
+//		}
+		
+//		private void setSpell(long id) {
+//			using (SQLiteConnection conn = new SQLiteConnection(connString)) {
+//				using (SQLiteCommand cmd = new SQLiteCommand(conn)) {
+//					conn.Open();
+//					
+//					cmd.CommandText = "Select * " +
+//						"From " + SplTbl.TABLE_NAME + " " +
+//						"Where " + SplTbl._ID + " = " + id + " ";
+//					
+//					using (SQLiteDataReader dr = cmd.ExecuteReader()) {
+//						if (dr.Read()) {
+//							setSpell(dr);
+//						} else {
+//							resetSpell();
+//						}
+//					}
+//				}
+//			}
+//		}
+		
+//		private void setSpell(SQLiteDataReader dr) {
+//			lblTitle.Text = (string)dr[SplTbl.COLUMN_NAME_NAME];
+//			decimal spellType = (decimal)dr[SplTbl.COLUMN_NAME_TYPE];
+//			lblLevel.Text = mDecoder.GetSpellAttrib(
+//				spellType,
+//				(decimal)dr[SplTbl.COLUMN_NAME_LEVEL],
+//				((decimal)dr[SplTbl.COLUMN_NAME_REVERSIBLE]) != 0
+//			);
+//			lblSchools.Text = mDecoder.GetSchools((decimal)dr[SplTbl.COLUMN_NAME_SCHOOLS_BITFIELD], true);
+//			if (spellType == SpellDecoder.TYPE_CLERICS) {
+//				lblSpheres.Text = "Spheres: " + mDecoder.GetSpheres((decimal)dr[SplTbl.COLUMN_NAME_SPHERES_BITFIELD]);
+//				//lblSpheres.Text += " (" + (string)dr[SplTbl.COLUMN_NAME_SPHERES] + ")";
+//			} else {
+//				lblSpheres.Text = "";
+//			}
+//			lblRange.Text = "Range: " + (string)dr[SplTbl.COLUMN_NAME_RANGE];
+//			lblCompos.Text = "Components: " + mDecoder.GetCompos((decimal)dr[SplTbl.COLUMN_NAME_COMPONENTS_BITFIELD]);
+//			lblDuration.Text = "Duration: " + (string)dr[SplTbl.COLUMN_NAME_DURATION];
+//			lblCastTime.Text = "Casting Time: " + (string)dr[SplTbl.COLUMN_NAME_CAST_TIME];
+//			lblArea.Text = "Area of Effect: " + (string)dr[SplTbl.COLUMN_NAME_AOE];
+//			lblSaving.Text = "Saving Throw: " + (string)dr[SplTbl.COLUMN_NAME_SAVING];
+//			string book = (string)dr[SplTbl.COLUMN_NAME_BOOK];
+//			if (! string.IsNullOrEmpty(book)) {
+//				lblBook.Text = "-" + book + "-";
+//			} else {
+//				lblBook.Text = "";
+//			}
+//			wbBody.DocumentText = mDecoder.getDescription((string)dr[SplTbl.COLUMN_NAME_DESCRIPTION]);
+//		}
 		
 		private void setSpell(long id) {
-			using (SQLiteConnection conn = new SQLiteConnection(connString)) {
-				using (SQLiteCommand cmd = new SQLiteCommand(conn)) {
-					conn.Open();
-					
-					cmd.CommandText = "Select * " +
-						"From " + SplTbl.TABLE_NAME + " " +
-						"Where " + SplTbl._ID + " = " + id + " ";
-					
-					using (SQLiteDataReader dr = cmd.ExecuteReader()) {
-						if (dr.Read()) {
-							setSpell(dr);
-						} else {
-							resetSpell();
-						}
-					}
-				}
+			DataTable dt = mSpellDB.GetSpell(id);
+			if (dt != null && dt.Rows.Count > 0) {
+				setSpell(dt);
+			} else {
+				resetSpell();
 			}
 		}
 		
-		private void setSpell(SQLiteDataReader dr) {
+		private void setSpell(DataTable dt) {
+			DataRow dr = dt.Rows[0];
 			lblTitle.Text = (string)dr[SplTbl.COLUMN_NAME_NAME];
 			decimal spellType = (decimal)dr[SplTbl.COLUMN_NAME_TYPE];
 			lblLevel.Text = mDecoder.GetSpellAttrib(
@@ -248,6 +311,9 @@ namespace Grimorium.ADnD
 		}
 		
 		private void initFilter(SpellFilter filter) {
+			cbUnofficial.Checked = (filter.filteredSources == null || filter.filteredSources.Length == 0);
+			cbUnofficial.CheckedChanged += new System.EventHandler(cbUnofficialCheckedChanged);
+
 			if (filter.types == SpellDecoder.TYPE_WIZARDS) {
 				rbSpellTypeWizard.Checked = true;
 			} else if (filter.types == SpellDecoder.TYPE_CLERICS) {
@@ -284,9 +350,6 @@ namespace Grimorium.ADnD
 				clbSpheres.Items.Add(sphere, true);
 			}
 			clbSpheres.SelectedIndexChanged += new System.EventHandler(clbCheckedChanged);
-			
-			//SpellFilter sf = new SpellFilter();
-			//sf = SpellFilter.Deserialize(sf.Serialize());
 		}
 		
 		void DgMainCellClick(object sender, DataGridViewCellEventArgs e) {
@@ -306,6 +369,15 @@ namespace Grimorium.ADnD
 		
 		void CmdClearClick(object sender, EventArgs e) {
 			tbQuery.Clear();
+		}
+		
+		void cbUnofficialCheckedChanged(object sender, EventArgs e) {
+			if (cbUnofficial.Checked) {
+				mFilter.filteredSources = new long[0];
+			} else {
+				mFilter.filteredSources = SpellFilter.UNOFFICIAL_SOURCES;
+			}
+			loadData();
 		}
 		
 		void rbSpellTypeCheckedChanged(object sender, EventArgs e) {

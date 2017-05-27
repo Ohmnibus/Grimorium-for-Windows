@@ -95,6 +95,7 @@
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
+    <Compile Include="SpellDB.cs" />
     <Compile Include="SpellDecoder.cs" />
     <Compile Include="SpellFilter.cs" />
   </ItemGroup>

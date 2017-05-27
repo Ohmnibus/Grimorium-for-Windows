@@ -7,6 +7,9 @@
  * To change this template use Tools | Options | Coding | Edit Standard Headers.
  */
 using System;
+using System.IO;
+using System.Text;
+using System.Linq;
 
 using Spell = Grimorium.ADnD.SpellDecoder;
 using SpellTable = net.ohmnibus.grimorium.database.GrimoriumContract.SpellTable;
@@ -20,8 +23,11 @@ namespace Grimorium.ADnD
 		
 		protected const string WHERE_SEP = "And ";
 		
+		public static readonly long[] NO_SOURCES = new long[0];
+		public static long[] UNOFFICIAL_SOURCES = new long[0];
+		
 		public SpellFilter() {
-			reset();
+			Reset();
 		}
 		
 		public string query;
@@ -32,6 +38,7 @@ namespace Grimorium.ADnD
 		public uint schools;
 		public uint spheres;
 		public uint compos;
+		public long[] filteredSources;
 		
 		public bool Verbal {
 			get {
@@ -77,7 +84,7 @@ namespace Grimorium.ADnD
 //			}
 //		}
 		
-		public void reset() {
+		public void Reset() {
 			query = null;
 			types = Spell.TYPE_ALL;
 			levels = Spell.LEVEL_ALL;
@@ -85,18 +92,51 @@ namespace Grimorium.ADnD
 			schools = Spell.SCHOOL_ALL;
 			spheres = Spell.SPHERE_ALL;
 			compos = Spell.COMP_ALL;
+			filteredSources = UNOFFICIAL_SOURCES;
 		}
 	
-		public bool isEmpty() {
+		public bool IsEmpty() {
 			return string.IsNullOrEmpty(query)
 				&& types == Spell.TYPE_ALL
 				&& levels == Spell.LEVEL_ALL
 				&& books == Spell.BOOK_ALL
 				&& schools == Spell.SCHOOL_ALL
 				&& spheres == Spell.SPHERE_ALL
-				&& compos == Spell.COMP_ALL;
+				&& compos == Spell.COMP_ALL
+				&& (filteredSources == null || filteredSources.Length == 0);
+				//&& sameSourceLists(filteredSources, UNOFFICIAL_SOURCES);
+			
 		}
 		
+		private bool sameSourceLists(long[] sourceList1, long[] sourceList2) {
+			if (sourceList1 == null && sourceList2 == null) {
+				return true;
+			}
+			if (sourceList1 == null
+			    || sourceList2 == null
+			    || sourceList1.Length != sourceList2.Length) {
+				return false;
+			}
+			return sourceList1.SequenceEqual(sourceList2);
+		}
+		
+				
+		public bool WriteToFile(string path) {
+			try {
+				//using (FileStream fs = File.OpenWrite(path)) {
+				using (FileStream fs = new FileStream(path, FileMode.Create, FileAccess.Write)) {
+					using (StreamWriter sw = new StreamWriter(fs, Encoding.UTF8)) {
+						sw.WriteLine(Serialize());
+					}
+				}
+			} catch (Exception ex) {
+				//Uh oh....
+				Console.WriteLine(ex);
+				return false;
+			}
+			return true;
+		}
+
 		public string Serialize() {
 			//string retVal = "";
 			return types.ToString("X") + 
@@ -104,7 +144,26 @@ namespace Grimorium.ADnD
 				"|" + books.ToString("X") +
 				"|" + schools.ToString("X") +
 				"|" + spheres.ToString("X") +
-				"|" + compos.ToString("X");
+				"|" + compos.ToString("X") +
+				"|" + (filteredSources == null ? "" : string.Join(",", filteredSources.Select(S => S.ToString("X"))));
+		}
+		
+		public static SpellFilter ReadFromFile(string path) {
+			SpellFilter retVal;
+			try {
+				using (FileStream fs = File.OpenRead(path)) {
+					using (StreamReader sr = new StreamReader(fs, Encoding.UTF8)) {
+						retVal = SpellFilter.Deserialize(
+							sr.ReadLine()
+						);
+					}
+				}
+			} catch (Exception ex) {
+				//Uh oh....
+				Console.WriteLine(ex);
+				retVal = new SpellFilter();
+			}
+			return retVal;
 		}
 		
 		public static SpellFilter Deserialize(string serialized) {
@@ -118,6 +177,11 @@ namespace Grimorium.ADnD
 				retVal.schools = uint.Parse(fields[3], System.Globalization.NumberStyles.HexNumber);
 				retVal.spheres = uint.Parse(fields[4], System.Globalization.NumberStyles.HexNumber);
 				retVal.compos = uint.Parse(fields[5], System.Globalization.NumberStyles.HexNumber);
+				string[] rawfilteredSources = fields[6].Split(',');
+				retVal.filteredSources = rawfilteredSources
+					.Where(T => ! string.IsNullOrEmpty(T))
+					.Select(T => long.Parse(T, System.Globalization.NumberStyles.HexNumber))
+					.ToArray();
 			} catch (Exception ex) {
 				Console.WriteLine(ex);
 				retVal = new SpellFilter();
@@ -138,10 +202,10 @@ namespace Grimorium.ADnD
 			return bitField;
 		}
 		
-		public static string getWhereClause(SpellFilter spellFilter) {
+		public static string GetWhereClause(SpellFilter spellFilter) {
 			string whereClause = "";
 			string whereSep = "";
-			if (spellFilter != null && ! spellFilter.isEmpty()) {
+			if (spellFilter != null && ! spellFilter.IsEmpty()) {
 				if (! string.IsNullOrEmpty(spellFilter.query)) {
 					whereClause += whereSep + SpellTable.COLUMN_NAME_NAME + " Like @filter ";
 					whereSep = WHERE_SEP;
@@ -153,12 +217,12 @@ namespace Grimorium.ADnD
 					);
 					whereSep = WHERE_SEP;
 				}
-//				long[] filteredSources = spellFilter.getFilteredSources();
-//				if (filteredSources.length > 0) {
-//					whereClause += whereSep + SpellTable.COLUMN_NAME_SOURCE + " " +
-//						"Not In (" + Utils.join(filteredSources, ",") + ") ";
-//					whereSep = WHERE_SEP;
-//				}
+				long[] filteredSources = spellFilter.filteredSources;
+				if (filteredSources.Length > 0) {
+					whereClause += whereSep + SpellTable.COLUMN_NAME_SOURCE + " " +
+						"Not In (" + string.Join(",", filteredSources) + ") ";
+					whereSep = WHERE_SEP;
+				}
 				if (spellFilter.books != Spell.BOOK_ALL) {
 					whereClause += whereSep + getBitTest(
 							SpellTable.COLUMN_NAME_BOOK_BITFIELD,

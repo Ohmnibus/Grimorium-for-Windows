@@ -9,5 +9,5 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyCompany ("Ohmnibus Prod.")]
 [assembly: ComVisible (false)]
 [assembly: Guid ("209f4d50-1339-4bc3-bb69-726a039e61ce")]
-[assembly: AssemblyVersion ("0.8.0.0")]
-[assembly: AssemblyFileVersion ("0.8.0.0")]
+[assembly: AssemblyVersion ("0.9.0.0")]
+[assembly: AssemblyFileVersion ("0.9.0.0")]
